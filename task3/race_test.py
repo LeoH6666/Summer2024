@@ -15,7 +15,7 @@ thresholds = [(16, 86, 32, 127, -19, 86), # generic_red_thresholds
               (30, 100, -64, -8, -32, 32), # generic_green_thresholds
               (0, 30, 0, 64, -128, 0),# generic_blue_thresholds
               (31, 83, 30, 83, -18, 58),#redball
-              (24, 75, -44, 5, 26, 74),#球网整体
+              (30, 91, -39, 11, 33, 71),#球网整体
               (57, 69, -45, -14, 28, 46),#球框
               (28, 86, -40, 11, 25, 57)] #测试样例
 
@@ -101,12 +101,13 @@ while True:
         img.draw_line(blob_green.minor_axis_line(), color=(0, 0, 255))  # 画出色块的次轴线
 
         print("green_area:" ,blob_green.area())
-        if blob_green.area()>19000: #距离球门过近，
+        if blob_green.area()>17000: #距离球门过近，
             uart.write("%d" % 5)
+            print("5")
             near_goal = True
             continue
 
-        elif blob_green.area()>8000: #逐渐靠近球门准备减速
+        elif blob_green.area()>4000: #逐渐靠近球门准备减速
             uart.write("%d" % 4)
             time.sleep(0.01)
             print("4")
@@ -116,14 +117,14 @@ while True:
 
 
         #记录上一次绿门出现时左中右位置
-        if green_cx > img.width() // 3 and green_cx < 2* img.width() // 3:  #色块在中间
+        if green_cx > 2*img.width() // 7 and green_cx < 5* img.width() // 7:  #色块在中间
             green_last_position = 1
 
-        elif green_cx < img.width() // 3:  # 色块在右侧
-            green_last_position = 2
-
-        elif green_cx >= 2* img.width() // 3:  # 色块在左侧
+        elif green_cx < 2*img.width() // 7:  # 色块在右侧
             green_last_position = 3
+
+        elif green_cx >= 5* img.width() // 7:  # 色块在左侧
+            green_last_position = 2
 
     if blobs_red: #视野中同时找到红球和门
         # 获取红绿色块的中心坐标
@@ -138,14 +139,15 @@ while True:
         # 在色块的中心点附近画一个关键点，标记出色块的旋转角度
         img.draw_keypoints([(blob_red.cx(), blob_red.cy(), int(math.degrees(blob_red.rotation())))], size=20)
 
+        print("red_area:",blob_red.area())
         #判断是否距离红球过远
         if blob_red.area()<1500:
             if red_cx < img.width() // 3:  # 色块在左侧
-                uart.write("%d" % 3)  # 发送数字3
-                #print("RD: 3")
-            elif red_cx > 2 * img.width() // 3:  # 色块在右侧
-                uart.write("%d" % 2)  # 发送数字2
+                uart.write("%d" % 2)  # 发送数字3
                 #print("RD: 2")
+            elif red_cx > 2 * img.width() // 3:  # 色块在右侧
+                uart.write("%d" % 3)  # 发送数字2
+                #print("RD: 3")
             elif red_cx>img.width() //3 and red_cx<2 * img.width()//3:    # 色块在中间位置
                 uart.write("%d" % 1)
                 #print("RD: 1")
@@ -164,10 +166,10 @@ while True:
 
 
             elif red_cx < img.width() // 3:  # 色块在左侧,右轮向左抖一下
-                uart.write("%d" % 8)  # 发送数字8
+                uart.write("%d" % 9)  # 发送数字8
 
             elif red_cx > 2 * img.width() // 3:  # 色块在右侧，左轮向右抖一下
-                uart.write("%d" % 9)  # 发送数字9
+                uart.write("%d" % 8)  # 发送数字9
 
     elif not blobs_red:    #视野中没有红球
 
