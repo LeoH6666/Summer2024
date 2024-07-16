@@ -25,6 +25,7 @@ sensor.set_framesize(sensor.QQVGA)
 sensor.skip_frames(time = 2000)
 sensor.set_auto_gain(False) # must be turned off for color tracking
 sensor.set_auto_whitebal(False) # must be turned off for color tracking
+sensor.set_auto_exposure(False)
 clock = time.clock()
 LEDB = LED(3)                  # 蓝色LED
 
@@ -100,20 +101,12 @@ while True:
         img.draw_line(blob_green.major_axis_line(), color=(0, 255, 0))  # 画出色块的主轴线
         img.draw_line(blob_green.minor_axis_line(), color=(0, 0, 255))  # 画出色块的次轴线
 
-        print("green_area:" ,blob_green.area())
+        #print("green_area:" ,blob_green.area())
         if blob_green.area()>17000: #距离球门过近，
             uart.write("%d" % 5)
             print("5")
             near_goal = True
             continue
-
-        elif blob_green.area()>4000: #逐渐靠近球门准备减速
-            uart.write("%d" % 4)
-            time.sleep(0.01)
-            print("4")
-        else :
-            uart.write("%c" % 'a')    #远离球门高速行驶
-            time.sleep(0.01)
 
 
         #记录上一次绿门出现时左中右位置
@@ -142,16 +135,28 @@ while True:
         print("red_area:",blob_red.area())
         #判断是否距离红球过远
         if blob_red.area()<1500:
-            if red_cx < img.width() // 3:  # 色块在左侧
+            uart.write("%c" % 'a')    #远离球门高速行驶
+            time.sleep(0.01)
+            if red_cx < img.width() // 5:  # 色块在左侧
                 uart.write("%d" % 2)  # 发送数字3
                 #print("RD: 2")
-            elif red_cx > 2 * img.width() // 3:  # 色块在右侧
+            elif red_cx>=img.width() //5 and red_cx<2 * img.width()//5:  # 色块在左中侧
+                uart.write("%c" % 'b')  # 发送数字2
+                #print("RD: b")
+            elif 2*red_cx>=img.width() //5 and red_cx<3 * img.width()//5:  # 色块在中间
+                uart.write("%d" % 1)  # 发送数字1
+                #print("RD: 2")
+            elif 3*red_cx>=img.width() //5 and red_cx<4 * img.width()//5:  # 色块在右中侧
                 uart.write("%d" % 3)  # 发送数字2
                 #print("RD: 3")
-            elif red_cx>img.width() //3 and red_cx<2 * img.width()//3:    # 色块在中间位置
-                uart.write("%d" % 1)
-                #print("RD: 1")
+            elif 4*red_cx>=img.width() //5 and red_cx<5 * img.width()//5:    # 色块在右侧
+                uart.write("%c" % 'c')
+                #print("RD: c")
+
         else:   #靠近球后开始准备自转
+            uart.write("%d" % 4)
+            time.sleep(0.01)
+            print("4")
             if red_cx>img.width() //3 and red_cx<2 * img.width()//3:
 
                 if     green_last_position == 1:#车与球和球门在一条直线，车直行
@@ -166,10 +171,10 @@ while True:
 
 
             elif red_cx < img.width() // 3:  # 色块在左侧,右轮向左抖一下
-                uart.write("%d" % 9)  # 发送数字8
+                uart.write("%d" % 9)  # 发送数字9
 
             elif red_cx > 2 * img.width() // 3:  # 色块在右侧，左轮向右抖一下
-                uart.write("%d" % 8)  # 发送数字9
+                uart.write("%d" % 8)  # 发送数字8
 
     elif not blobs_red:    #视野中没有红球
 
