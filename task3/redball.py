@@ -166,6 +166,7 @@ while True:
     if not green_straight and not green_retreat and start_circle:
         uart.write("%d" % 4)  # 发送数字4, 表示需要转圈了
         print("RD: 4")
+
     # 打印当前帧率
     #print(clock.fps())
     #print("width:",img.width()//3)
